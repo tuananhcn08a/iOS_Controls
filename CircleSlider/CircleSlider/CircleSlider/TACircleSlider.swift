@@ -151,7 +151,7 @@ class TACircleSlider: UIControl {
         if self.lstDots.count > 0 {
             
             for i in 0..<self.lstDots.count {
-                self.lstDots[i].fillColor = i >= currentIndex ? UIColor.lightGray.cgColor : self.dotColor.withAlphaComponent(CGFloat(i)/CGFloat(self.lstDots.count)).cgColor
+                self.lstDots[i].fillColor = i >= currentIndex ? UIColor.lightGray.withAlphaComponent(0.5).cgColor : self.dotColor.withAlphaComponent(CGFloat(i)/CGFloat(self.lstDots.count)).cgColor
                 
                 self.lstDots[i].lineWidth = i >= currentIndex ? 0 : 0.1
                 
