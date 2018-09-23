@@ -1,190 +1,238 @@
 //
 //  TACircleSlider.swift
-//  CircleSlider
+//  TACircleSlider
 //
-//  Created by The New Macbook on 9/19/18.
-//  Copyright © 2018 FPT. All rights reserved.
+//  Created by Ragnar on 9/22/18.
+//  Copyright © 2018 Ragnar. All rights reserved.
 //
 
 import UIKit
 
-// Ultilities functions
-private func degreeToRadian(degree: Double) -> Double {
-    return Double(degree * (Double.pi / 180))
-}
+// MARK: Define default value
+let tDefaultStartAngle: CGFloat = CGFloat(Float.pi * 3 / 4)
+let tDefaultEndAngle: CGFloat = CGFloat(Float.pi * 9 / 4)
+let tDefaultNumberOfDots = 16
+let tDefaultRadiusOfDots: CGFloat = 5.0
+let tDefaultColorOfDot = UIColor.green
+let tDefaultMinValue: CGFloat = 0.0
+let tDefaultMaxValue: CGFloat = 100.0
 
-private func radianToDegree(radian: Double) -> Double {
-    return Double(radian * (180 / Double.pi))
-}
-
-// Delegate
+// MARK: Delegate
 protocol TACircleSliderDelegate: class {
-    func circularSeeker(_ seeker: TACircleSlider, didChangeValue value: Float)
+    func sliderDidChangeValue(value: CGFloat)
 }
 
-// Class
+@IBDesignable
 class TACircleSlider: UIControl {
-
-    // MARK: Propertise
+    
+    // MARK: Properties
     weak var delegate: TACircleSliderDelegate?
-    lazy var seekerBarLayer = CAShapeLayer()
+    
+    var currentValue: CGFloat = tDefaultMaxValue / 2 {
+        didSet {
+            self.setNeedsLayout()
+            self.delegate?.sliderDidChangeValue(value: self.currentValue)
+        }
+    }
+    
+    var minValue: CGFloat = tDefaultMinValue
+    var maxValue: CGFloat = tDefaultMaxValue
+    
+    var startAngle: CGFloat = tDefaultStartAngle {
+        didSet {
+            self.setNeedsLayout()
+        }
+    }
+    
+    var endAngle: CGFloat = tDefaultEndAngle {
+        didSet {
+            self.setNeedsLayout()
+        }
+    }
+    
+    var numberDots: Int = tDefaultNumberOfDots
+    var dotRadius: CGFloat = tDefaultRadiusOfDots
+    
+    var dotColor: UIColor = tDefaultColorOfDot
+    var isGradient: Bool = true
+    
+    var lstDots: [CAShapeLayer] = []
+    
+    // Thumb
     lazy var thumbButton = UIButton(type: .custom)
-    
-    // Start Angle
-    var startAngle: Float = 90.0 {
-        didSet {
-            self.setNeedsLayout()
-        }
-    }
-    
-    // End Angle
-    var endAngle: Float = 180.0 {
-        didSet {
-            self.setNeedsLayout()
-        }
-    }
-    
-    var currentAngle: Float = 180 {
-        didSet {
-            self.setNeedsLayout()
-        }
-    }
-    
-    var seekBarColor: UIColor = .gray {
-        didSet {
-            seekerBarLayer.strokeColor = seekBarColor.cgColor
-            self.setNeedsLayout()
-        }
-    }
-    
     var thumbColor: UIColor = .red {
         didSet {
             thumbButton.backgroundColor = thumbColor
-            self.setNeedsLayout()
+            self.setNeedsDisplay()
         }
     }
     
-    
-    
-    // MARK: Life Cycle
+    // MARK: Life cycle
     override func awakeFromNib() {
         super.awakeFromNib()
         
-        initSubViews()
+//        initSubViews()
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        initSubViews()
+//        initSubViews()
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
+    override func draw(_ rect: CGRect) {
+        initSubViews()
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
-        
-        let center = CGPoint(x: self.bounds.size.width/2, y: self.bounds.size.height/2)
-        
-        let sAngle = degreeToRadian(degree: Double(startAngle))
-        let eAngle = degreeToRadian(degree: Double(endAngle))
-        
-        let path = UIBezierPath(arcCenter: center, radius: (self.bounds.size.width - 18)/2, startAngle: CGFloat(sAngle), endAngle: CGFloat(eAngle), clockwise: true)
-        seekerBarLayer.path = path.cgPath
+        updateThumbPosition()
     }
     
-    // MARK: Methods
+    // MARK: Method
     private func initSubViews() {
         addSeekerBar()
+        addThumb()
     }
-
+    
     private func addSeekerBar() {
-        let center = CGPoint(x: self.bounds.size.width / 2, y: self.bounds.size.height / 2)
+        let divisionUnitValue = (self.maxValue - self.minValue)/CGFloat(self.numberDots)
+        let divisionUnitAngle = abs(self.endAngle - self.startAngle)/CGFloat(self.numberDots)
         
-        let sAngle = degreeToRadian(degree: Double(startAngle))
-        let eAngle = degreeToRadian(degree: Double(endAngle))
+        let center = CGPoint(x: self.bounds.width / 2, y: self.bounds.height / 2)
+        let circleRadius: CGFloat = min(self.bounds.width/2, self.bounds.height/2)
         
-        // TODO: TRuyền vào radius
-        let path = UIBezierPath(arcCenter: center, radius: self.bounds.size.width / 2, startAngle: CGFloat(sAngle), endAngle: CGFloat(eAngle), clockwise: true)
-        
-        seekerBarLayer.path = path.cgPath
-        seekerBarLayer.lineWidth = 8.0
-        seekerBarLayer.lineCap = kCALineCapRound
-        seekerBarLayer.strokeColor = seekBarColor.cgColor
-        seekerBarLayer.fillColor = UIColor.clear.cgColor
-        let one : NSNumber = 1
-        let two : NSNumber = 20
-        seekerBarLayer.lineDashPattern = [one,two]
-        
-        if seekerBarLayer.superlayer == nil {
-            self.layer.addSublayer(seekerBarLayer)
-        }
-    }
-    
-    private func degreeForLocation(location: CGPoint) -> Double {
-        let dx = location.x - (self.frame.size.width * 0.5)
-        let dy = location.y - (self.frame.size.height * 0.5)
-        
-        let angle = Double(atan2(Double(dy), Double(dx)))
-        
-        var degree = radianToDegree(radian: angle)
-        if degree < 0 {
-            degree = 360 + degree
-        }
-        
-        return degree
-    }
-    
-    private func moveToPoint(point: CGPoint) -> Bool {
-        var degree = degreeForLocation(location: point)
-        
-        func moveToClosestEdge(degree: Double) {
-            let startDistance = fabs(Float(degree) - startAngle)
-            let endDistance = fabs(Float(degree) - endAngle)
+        // Draw dots
+        for i in 0..<self.numberDots+1 {
+            let value = CGFloat(i) * divisionUnitValue + self.minValue
+            let angle = self.angleFromValue(value: value, devisionUnitValue: divisionUnitValue, devisionUnitAngle: divisionUnitAngle)
             
-            if startDistance < endDistance {
-                currentAngle = startAngle
-            } else {
-                currentAngle = endDistance
+            let dotCenter = CGPoint(x: circleRadius * cos(angle) + center.x, y: circleRadius * sin(angle) + center.y)
+            
+            self.drawDot(center: dotCenter, radius: self.dotRadius, fillColor: self.dotColor.withAlphaComponent((CGFloat(i)/CGFloat(self.numberDots))).cgColor)
+        }
+    }
+    
+    private func addThumb() {
+        thumbButton.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+        thumbButton.backgroundColor = thumbColor
+        thumbButton.layer.cornerRadius = thumbButton.frame.size.width/2
+        thumbButton.layer.masksToBounds = true
+        thumbButton.isUserInteractionEnabled = false
+        self.addSubview(thumbButton)
+    }
+    
+    private func updateThumbPosition() {
+        let angle: CGFloat = abs(self.currentValue * (self.startAngle - endAngle) / (minValue - maxValue)) + self.startAngle
+
+//        print("-------\(angle)")
+        var rect = thumbButton.frame
+
+        let circleRadius: CGFloat = min(self.bounds.width/2, self.bounds.height/2)
+
+        let thumbCenter: CGFloat = 10.0
+
+        let finalX = cos(angle) * circleRadius
+        let finalY = sin(angle) * circleRadius
+
+        rect.origin.x = finalX - thumbCenter + self.bounds.width/2
+        rect.origin.y = finalY - thumbCenter + self.bounds.height/2
+
+        thumbButton.frame = rect
+        
+        // update color for list dot
+        let progress = (self.currentValue - self.minValue)/(self.maxValue - self.minValue)
+        let currentIndex = Int(ceil(CGFloat(progress * CGFloat(tDefaultNumberOfDots))))
+        
+        if self.lstDots.count > 0 {
+            
+            for i in 0..<self.lstDots.count {
+                self.lstDots[i].fillColor = i >= currentIndex ? UIColor.lightGray.cgColor : self.dotColor.withAlphaComponent(CGFloat(i)/CGFloat(self.lstDots.count)).cgColor
+                
+                self.lstDots[i].lineWidth = i >= currentIndex ? 0 : 0.1
+                
             }
         }
+    }
+    
+    // Convert angle to value
+    private func angleFromValue(value: CGFloat, devisionUnitValue: CGFloat, devisionUnitAngle: CGFloat) -> CGFloat {
         
-        if startAngle > endAngle {
-            if degree < Double(startAngle) && degree > Double(endAngle) {
-                moveToClosestEdge(degree: degree)
-                return false
-            }
-        } else {
-            if degree > Double(endAngle) || degree < Double(startAngle) {
-                moveToClosestEdge(degree: degree)
-                return false
-            }
+        let level = (value - minValue)/devisionUnitValue
+        let angle: CGFloat = level * devisionUnitAngle + self.startAngle
+        return angle
+    }
+    
+    //
+    private func drawDot(center: CGPoint, radius: CGFloat, fillColor: CGColor) {
+        
+        let dotLayer = CAShapeLayer()
+        dotLayer.fillColor = fillColor
+        dotLayer.strokeColor = self.dotColor.cgColor
+        dotLayer.lineWidth = 0.1
+        let path = UIBezierPath(arcCenter: center, radius: radius, startAngle: 0.0, endAngle: 360.0, clockwise: true)
+        
+        dotLayer.path = path.cgPath
+        
+        self.layer.addSublayer(dotLayer)
+        self.lstDots.append(dotLayer)
+    }
+    
+    // ...
+    private func angleForLocation(location: CGPoint) -> CGFloat {
+        let dx = location.x - self.frame.width / 2
+        let dy = location.y - self.frame.height / 2
+
+        let angle = CGFloat(atan2(dy, dx))
+
+        return angle
+    }
+    
+    // MARK: Touch event
+    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        
+        let point = touch.location(in: self)
+        
+        let rect = self.thumbButton.frame.insetBy(dx: -20, dy: -20)
+        
+        let canBegin = rect.contains(point)
+        
+        if canBegin {
+            UIView.animate(withDuration: 0.2, delay: 0.0, options: [.curveEaseIn, .beginFromCurrentState], animations: {
+                self.thumbButton.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+            }, completion: nil)
         }
         
-        currentAngle = Float(degree)
+        return canBegin
+    }
+    
+    override func continueTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        let point = touch.location(in: self)
+        var angle = angleForLocation(location: point)
+        angle = angle >= self.startAngle ? angle : (CGFloat((2 * Float.pi)) + angle)
+        if angle > self.endAngle || angle < self.startAngle {
+            UIView.animate(withDuration: 0.2, delay: 0.0, options: [ .curveEaseOut, .beginFromCurrentState ], animations: { () -> Void in
+                self.thumbButton.transform = .identity
+            }, completion: nil)
+            return false
+        }
+
+        print(angle)
+        let newValue = abs(angle - self.startAngle) / (self.endAngle - self.startAngle) * (self.maxValue - self.minValue)
+        self.currentValue = newValue
+        print(newValue)
+        
         return true
     }
     
-    // MARK: Public methods
-    func moveToAngle(angle: Float, duration: CFTimeInterval) {
+    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
         
-        let center = CGPoint(x: self.bounds.size.width/2, y: self.bounds.size.height/2)
-        
-        let sAngle = degreeToRadian(degree: Double(startAngle))
-        let eAngle = degreeToRadian(degree: Double(angle))
-        
-        // TODO: TRuyền vào radius
-        let path = UIBezierPath(arcCenter: center, radius: self.bounds.size.width / 2, startAngle: CGFloat(sAngle), endAngle: CGFloat(eAngle), clockwise: true)
-        
-        CATransaction.begin()
-        let animation = CAKeyframeAnimation(keyPath: "position")
-        animation.duration = duration
-        animation.path = path.cgPath
-        CATransaction.setCompletionBlock { [weak self] in
-            self?.currentAngle = angle
-        }
-        CATransaction.commit()
+        UIView.animate(withDuration: 0.2, delay: 0.0, options: [ .curveEaseOut, .beginFromCurrentState ], animations: { () -> Void in
+            self.thumbButton.transform = .identity
+        }, completion: nil)
     }
 }
