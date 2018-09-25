@@ -15,9 +15,6 @@ class ViewController: UIViewController, TACircleSliderDelegate {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         cSlider.delegate = self
-        cSlider.dotColor = UIColor.black
-        cSlider.thumbRadius = 40
-        cSlider.thumImage = UIImage(named: "ic_light_color_thumb")
     }
 
     override func viewWillLayoutSubviews() {

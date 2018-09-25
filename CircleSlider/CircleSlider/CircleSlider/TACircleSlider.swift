@@ -50,7 +50,10 @@ class TACircleSlider: UIControl {
         }
     }
     
+    @IBInspectable
     var numberDots: Int = tDefaultNumberOfDots
+    
+    @IBInspectable
     var dotRadius: CGFloat = tDefaultRadiusOfDots
     
     var dotColor: UIColor = tDefaultColorOfDot
@@ -67,6 +70,7 @@ class TACircleSlider: UIControl {
         }
     }
     
+    @IBInspectable
     var thumImage: UIImage? = nil {
         didSet {
             if let image = self.thumImage {
@@ -76,6 +80,7 @@ class TACircleSlider: UIControl {
         }
     }
     
+    @IBInspectable
     var thumbRadius: CGFloat = 20
     
     
@@ -135,11 +140,6 @@ class TACircleSlider: UIControl {
         thumbButton.layer.cornerRadius = thumbButton.frame.size.width/2
         thumbButton.layer.masksToBounds = true
         thumbButton.isUserInteractionEnabled = false
-        
-        thumbButton.layer.shadowColor = UIColor.black.cgColor
-        thumbButton.layer.shadowOpacity = 0.5
-        thumbButton.layer.shadowOffset = CGSize.zero
-        thumbButton.layer.shadowRadius = 6
         
         self.addSubview(thumbButton)
     }
