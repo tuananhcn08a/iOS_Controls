@@ -67,17 +67,29 @@ class TACircleSlider: UIControl {
         }
     }
     
+    var thumImage: UIImage? = nil {
+        didSet {
+            if let image = self.thumImage {
+                self.thumbColor = .clear
+                self.thumbButton.setImage(image, for: .normal)
+            }
+        }
+    }
+    
+    var thumbRadius: CGFloat = 20
+    
+    
     // MARK: Life cycle
     override func awakeFromNib() {
         super.awakeFromNib()
         
-//        initSubViews()
+        //        initSubViews()
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-//        initSubViews()
+        //        initSubViews()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -118,30 +130,36 @@ class TACircleSlider: UIControl {
     }
     
     private func addThumb() {
-        thumbButton.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+        thumbButton.frame = CGRect(x: 0, y: 0, width: thumbRadius, height: thumbRadius)
         thumbButton.backgroundColor = thumbColor
         thumbButton.layer.cornerRadius = thumbButton.frame.size.width/2
         thumbButton.layer.masksToBounds = true
         thumbButton.isUserInteractionEnabled = false
+        
+        thumbButton.layer.shadowColor = UIColor.black.cgColor
+        thumbButton.layer.shadowOpacity = 0.5
+        thumbButton.layer.shadowOffset = CGSize.zero
+        thumbButton.layer.shadowRadius = 6
+        
         self.addSubview(thumbButton)
     }
     
     private func updateThumbPosition() {
         let angle: CGFloat = abs(self.currentValue * (self.startAngle - endAngle) / (minValue - maxValue)) + self.startAngle
-
-//        print("-------\(angle)")
+        
+        //        print("-------\(angle)")
         var rect = thumbButton.frame
-
+        
         let circleRadius: CGFloat = min(self.bounds.width/2, self.bounds.height/2)
-
-        let thumbCenter: CGFloat = 10.0
-
+        
+        let thumbCenter: CGFloat = thumbRadius / 2
+        
         let finalX = cos(angle) * circleRadius
         let finalY = sin(angle) * circleRadius
-
+        
         rect.origin.x = finalX - thumbCenter + self.bounds.width/2
         rect.origin.y = finalY - thumbCenter + self.bounds.height/2
-
+        
         thumbButton.frame = rect
         
         // update color for list dot
@@ -186,9 +204,9 @@ class TACircleSlider: UIControl {
     private func angleForLocation(location: CGPoint) -> CGFloat {
         let dx = location.x - self.frame.width / 2
         let dy = location.y - self.frame.height / 2
-
+        
         let angle = CGFloat(atan2(dy, dx))
-
+        
         return angle
     }
     
@@ -197,7 +215,7 @@ class TACircleSlider: UIControl {
         
         let point = touch.location(in: self)
         
-        let rect = self.thumbButton.frame.insetBy(dx: -20, dy: -20)
+        let rect = self.thumbButton.frame.insetBy(dx: -thumbRadius, dy: -thumbRadius)
         
         let canBegin = rect.contains(point)
         
@@ -220,11 +238,11 @@ class TACircleSlider: UIControl {
             }, completion: nil)
             return false
         }
-
-        print(angle)
+        
+        //        print(angle)
         let newValue = abs(angle - self.startAngle) / (self.endAngle - self.startAngle) * (self.maxValue - self.minValue)
-        self.currentValue = newValue
-        print(newValue)
+        self.currentValue = round(newValue)
+        //        print(self.currentValue)
         
         return true
     }
