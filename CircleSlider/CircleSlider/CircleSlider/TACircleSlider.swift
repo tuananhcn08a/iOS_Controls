@@ -28,7 +28,7 @@ class TACircleSlider: UIControl {
     // MARK: Properties
     weak var delegate: TACircleSliderDelegate?
     
-    var currentValue: CGFloat = tDefaultMaxValue / 2 {
+    var currentValue: CGFloat = tDefaultMaxValue {
         didSet {
             self.setNeedsLayout()
             self.delegate?.sliderDidChangeValue(value: self.currentValue)
@@ -51,11 +51,16 @@ class TACircleSlider: UIControl {
     }
     
     @IBInspectable
-    var numberDots: Int = tDefaultNumberOfDots
+    var numberDots: Int = tDefaultNumberOfDots {
+        didSet {
+            self.setNeedsLayout()
+        }
+    }
     
     @IBInspectable
     var dotRadius: CGFloat = tDefaultRadiusOfDots
     
+    @IBInspectable
     var dotColor: UIColor = tDefaultColorOfDot
     var isGradient: Bool = true
     
@@ -164,7 +169,7 @@ class TACircleSlider: UIControl {
         
         // update color for list dot
         let progress = (self.currentValue - self.minValue)/(self.maxValue - self.minValue)
-        let currentIndex = Int(ceil(CGFloat(progress * CGFloat(tDefaultNumberOfDots))))
+        let currentIndex = Int(ceil(CGFloat(progress * CGFloat(self.numberDots))))
         
         if self.lstDots.count > 0 {
             
